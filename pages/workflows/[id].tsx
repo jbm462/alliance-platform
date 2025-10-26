@@ -293,6 +293,27 @@ const WorkflowDetails: NextPage = () => {
           
           <div className="mt-6">
             <h3 className="text-lg font-medium text-gray-900">Workflow Steps</h3>
+            
+            {/* Completed Steps Summary */}
+            {workflowInstance && workflowInstance.steps_completed && workflowInstance.steps_completed.length > 0 && (
+              <div className="mt-4 mb-6">
+                <h4 className="text-md font-medium text-gray-700 mb-3">Completed Steps</h4>
+                <div className="space-y-4">
+                  {workflowInstance.steps_completed.map((completedStep: any, index: number) => (
+                    <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-green-800">Step {completedStep.step_index + 1} Completed</span>
+                        <span className="text-xs text-green-600">{completedStep.completed_at}</span>
+                      </div>
+                      <div className="text-sm text-green-700">
+                        <strong>Human Decision:</strong> {completedStep.data?.input || 'No input recorded'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div className="mt-4 space-y-6">
               {workflow.steps.map((step, index) => (
                 <div 
@@ -324,73 +345,99 @@ const WorkflowDetails: NextPage = () => {
                     </p>
                     
                     {activeStep === index && (
-                      <div className="mt-4">
-                        {step.type === 'human' ? (
-                          <div className="space-y-4">
-                            <p className="text-sm font-medium text-gray-700">
-                              Complete this step by providing your input:
+                      <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
+                        <div className="space-y-6">
+                          {/* Human Decision Section */}
+                          <div className="bg-white border border-blue-200 rounded-lg p-4">
+                            <div className="flex items-center mb-3">
+                              <div className="h-8 w-8 rounded-full bg-human-light flex items-center justify-center mr-3">
+                                <User className="h-4 w-4 text-human" />
+                              </div>
+                              <h3 className="text-lg font-medium text-gray-900">Human Decision</h3>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-3">
+                              {step.type === 'human' ? 'What decision or input are you providing?' : 'What decision did you make based on the AI output?'}
                             </p>
-                            {step.instructions && (
-                              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                            {step.type === 'human' && step.instructions && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
                                 <p className="text-sm text-blue-800">
                                   <strong>Instructions:</strong> {step.instructions}
                                 </p>
                               </div>
                             )}
                             <textarea
-                              rows={4}
+                              rows={3}
                               value={stepInput}
                               onChange={(e) => handleStepInputChange(e.target.value)}
                               className="shadow-sm block w-full focus:ring-human focus:border-human sm:text-sm border border-gray-300 rounded-md"
-                              placeholder="Enter your contribution..."
+                              placeholder={step.type === 'human' ? 'Describe your decision or input...' : 'Describe how you refined the AI output...'}
                             />
+                          </div>
+
+                          {/* AI Assist Section */}
+                          {step.type === 'ai' && (
+                            <div className="bg-white border border-green-200 rounded-lg p-4">
+                              <div className="flex items-center mb-3">
+                                <div className="h-8 w-8 rounded-full bg-ai-light flex items-center justify-center mr-3">
+                                  <Bot className="h-4 w-4 text-ai" />
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900">AI Assist</h3>
+                              </div>
+                              {step.system_prompt && (
+                                <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-3">
+                                  <p className="text-sm text-green-800">
+                                    <strong>AI Prompt:</strong> {step.system_prompt}
+                                  </p>
+                                  {step.user_prompt && (
+                                    <p className="text-sm text-green-700 mt-2">
+                                      <strong>User Input:</strong> {step.user_prompt}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                                <p className="text-sm text-yellow-800">
+                                  <strong>AI Output:</strong> [AI integration coming soon - this will show the actual AI response]
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Judgment Call Section */}
+                          {step.type === 'ai' && (
+                            <div className="bg-white border border-purple-200 rounded-lg p-4">
+                              <div className="flex items-center mb-3">
+                                <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                                  <svg className="h-4 w-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                  </svg>
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900">Judgment Call</h3>
+                              </div>
+                              <p className="text-sm text-gray-600 mb-3">
+                                How did you refine, filter, or improve the AI output?
+                              </p>
+                              <textarea
+                                rows={2}
+                                value={stepInput}
+                                onChange={(e) => handleStepInputChange(e.target.value)}
+                                className="shadow-sm block w-full focus:ring-purple-500 focus:border-purple-500 sm:text-sm border border-gray-300 rounded-md"
+                                placeholder="Describe how you refined the AI output..."
+                              />
+                            </div>
+                          )}
+
+                          {/* Action Button */}
+                          <div className="flex justify-end">
                             <button
                               onClick={handleNextStep}
                               disabled={!stepInput.trim()}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              Submit and Continue
+                              {activeStep < workflow.steps.length - 1 ? 'Complete Step & Continue' : 'Complete Workflow'}
                             </button>
                           </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <p className="text-sm font-medium text-gray-700">
-                              AI is processing this step...
-                            </p>
-                            {step.system_prompt && (
-                              <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                                <p className="text-sm text-green-800">
-                                  <strong>AI Prompt:</strong> {step.system_prompt}
-                                </p>
-                                {step.user_prompt && (
-                                  <p className="text-sm text-green-700 mt-2">
-                                    <strong>User Input:</strong> {step.user_prompt}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                            <div className="animate-pulse flex space-x-4">
-                              <div className="flex-1 space-y-4 py-1">
-                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                                <div className="space-y-2">
-                                  <div className="h-4 bg-gray-200 rounded"></div>
-                                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                              <p className="text-sm text-yellow-800">
-                                <strong>Note:</strong> AI integration coming soon! For now, click "Continue" to proceed.
-                              </p>
-                            </div>
-                            <button
-                              onClick={handleNextStep}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-ai hover:bg-ai-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ai"
-                            >
-                              Continue to Next Step
-                            </button>
-                          </div>
-                        )}
+                        </div>
                       </div>
                     )}
                   </div>
