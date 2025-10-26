@@ -64,7 +64,7 @@ export async function executeAIStep(step: any, inputs: any) {
           { role: 'system', content: step.system_prompt || step.systemPrompt || 'You are a helpful assistant.' },
           { role: 'user', content: interpolateInputs(step.user_prompt || step.userPrompt || '', inputs) }
         ],
-        max_tokens: 2000,
+        max_completion_tokens: 2000,
         temperature: 0.7
       })
     })
