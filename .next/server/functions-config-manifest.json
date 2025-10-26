@@ -1,0 +1,1 @@
+{"version":1,"functions":{"/api/auth/[...nextauth]":{},"/api/file-upload":{},"/api/upload":{},"/client-validation/[id]":{},"/workflows/[id]":{}}}
