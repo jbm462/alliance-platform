@@ -3,19 +3,23 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
 import WorkflowForm from '../../components/WorkflowForm';
-import { useSession } from 'next-auth/react';
 import DocumentInput from '../../components/DocumentInput';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const CreateWorkflow: NextPage = () => {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const [user, setUser] = useState<any>(null);
   const [extractedSteps, setExtractedSteps] = useState<{ type: 'human' | 'ai', label: string }[]>();
   
-  // Redirect if not authenticated
-  if (status === 'unauthenticated') {
-    router.push('/auth/signin');
-  }
+  useEffect(() => {
+    // Check for user in localStorage
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    } else {
+      router.push('/auth/signin');
+    }
+  }, [router]);
   
   const handleExtractSteps = (steps: { type: 'human' | 'ai', label: string }[]) => {
     setExtractedSteps(steps);

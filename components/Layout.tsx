@@ -1,15 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { User, Workflow, Users, Briefcase } from 'lucide-react';
-import { useSession, signOut } from 'next-auth/react';
 import { Menu } from 'lucide-react';
-import { useState } from 'react';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  useEffect(() => {
+    // Check for user in localStorage
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+  
+  const handleSignOut = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    router.push('/');
+  };
   
   const isActive = (path: string) => router.pathname === path;
   
@@ -27,22 +39,27 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </div>
             </div>
             <div className="flex items-center">
-              {session ? (
+              {user ? (
                 <div className="flex items-center space-x-4">
                   <span className="text-sm text-gray-700">
-                    {session.user.name}
+                    {user.email}
                   </span>
                   <button 
-                    onClick={() => signOut({ callbackUrl: '/' })}
+                    onClick={handleSignOut}
                     className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md text-sm font-medium"
                   >
                     Sign Out
                   </button>
                 </div>
               ) : (
-                <Link href="/auth/signin" className="bg-human hover:bg-human-dark text-white px-4 py-2 rounded-md text-sm font-medium">
-                  Sign In
-                </Link>
+                <div className="flex items-center space-x-2">
+                  <Link href="/auth/signin" className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md text-sm font-medium">
+                    Sign In
+                  </Link>
+                  <Link href="/auth/register" className="bg-human hover:bg-human-dark text-white px-4 py-2 rounded-md text-sm font-medium">
+                    Register
+                  </Link>
+                </div>
               )}
             </div>
           </div>

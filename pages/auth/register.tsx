@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 
-export default function SignIn() {
+export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,7 +16,7 @@ export default function SignIn() {
     setError('');
     
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -31,7 +31,7 @@ export default function SignIn() {
         localStorage.setItem('user', JSON.stringify(data.user));
         router.push('/profile');
       } else {
-        setError(data.error || 'Invalid email or password');
+        setError(data.error || 'Registration failed');
       }
     } catch (err) {
       setError('Network error. Please try again.');
@@ -43,39 +43,37 @@ export default function SignIn() {
   return (
     <>
       <Head>
-        <title>Sign In | AllIance</title>
+        <title>Register | AllIance</title>
       </Head>
-      
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to your account
+              Create your account
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
               Or{' '}
-              <Link href="/" className="font-medium text-human hover:text-human-dark">
-                return to the homepage
+              <Link href="/auth/signin" className="font-medium text-human hover:text-human-dark">
+                sign in to your existing account
               </Link>
             </p>
           </div>
-          
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
-                <label htmlFor="email-address" className="sr-only">
+                <label htmlFor="email" className="sr-only">
                   Email address
                 </label>
                 <input
-                  id="email-address"
+                  id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-human focus:border-human focus:z-10 sm:text-sm"
                   placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
@@ -86,38 +84,32 @@ export default function SignIn() {
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-human focus:border-human focus:z-10 sm:text-sm"
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
-            
+
             {error && (
-              <div className="text-red-500 text-sm text-center">{error}</div>
+              <div className="text-red-600 text-sm text-center">{error}</div>
             )}
-            
+
             <div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human disabled:opacity-50"
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? 'Creating account...' : 'Create account'}
               </button>
-            </div>
-            
-            <div className="text-sm text-center">
-              <p className="text-gray-600">
-                Demo credentials: demo@alliance.com / password
-              </p>
             </div>
           </form>
         </div>
       </div>
     </>
   );
-} 
+}
