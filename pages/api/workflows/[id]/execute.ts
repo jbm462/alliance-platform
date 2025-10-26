@@ -197,45 +197,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         
         let finalStepData = { ...stepData };
         
-        // If it's an AI step, execute the AI first
-        if (currentStep.type === 'ai') {
-          try {
-            const aiResponse = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/ai/execute`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                step: currentStep,
-                inputs: { userInput: stepData.input || '' }
-              }),
-            });
-
-            if (aiResponse.ok) {
-              const aiData = await aiResponse.json();
-              finalStepData = {
-                ...finalStepData,
-                aiOutput: aiData.content,
-                aiCost: aiData.cost,
-                aiTokens: aiData.tokens
-              };
-            } else {
-              // If AI fails, still continue but note the error
-              finalStepData = {
-                ...finalStepData,
-                aiError: 'AI execution failed',
-                aiOutput: 'AI integration temporarily unavailable'
-              };
-            }
-          } catch (aiError) {
-            console.error('AI execution error:', aiError);
-            finalStepData = {
-              ...finalStepData,
-              aiError: 'AI execution failed',
-              aiOutput: 'AI integration temporarily unavailable'
-            };
-          }
-        }
+        // AI execution is handled by the frontend
         
         // Mark current step as completed
         instance.steps_completed.push({

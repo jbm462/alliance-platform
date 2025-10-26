@@ -124,7 +124,45 @@ const WorkflowDetails: NextPage = () => {
         completed_at: new Date().toISOString()
       };
 
-      // AI execution is handled by the backend workflow execution API
+      // If it's an AI step, execute the AI first
+      if (currentStep.type === 'ai') {
+        try {
+          const aiResponse = await fetch('/api/ai/execute', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              step: currentStep,
+              inputs: { userInput: stepInput }
+            }),
+          });
+
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json();
+            stepData = {
+              ...stepData,
+              aiOutput: aiData.content,
+              aiCost: aiData.cost,
+              aiTokens: aiData.tokens
+            };
+          } else {
+            // If AI fails, still continue but note the error
+            stepData = {
+              ...stepData,
+              aiError: 'AI execution failed',
+              aiOutput: 'AI integration temporarily unavailable'
+            };
+          }
+        } catch (aiError) {
+          console.error('AI execution error:', aiError);
+          stepData = {
+            ...stepData,
+            aiError: 'AI execution failed',
+            aiOutput: 'AI integration temporarily unavailable'
+          };
+        }
+      }
 
       const response = await fetch(`/api/workflows/${id}/execute`, {
         method: 'PUT',
