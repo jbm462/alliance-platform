@@ -3,11 +3,123 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 // Simple in-memory storage for workflow instances
 let workflowInstances: any[] = [];
 
+// Import the same workflow data as the main API
+let workflows: any[] = [
+  {
+    id: 'demo-workflow-1',
+    title: 'Content Creation Workflow',
+    description: 'A workflow for creating blog posts with AI assistance',
+    author_id: 'demo-user-123',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    version: '1.0',
+    version_notes: 'Initial version',
+    is_public: true,
+    category: 'content',
+    steps: [
+      {
+        id: 'step-1',
+        workflow_id: 'demo-workflow-1',
+        order_index: 0,
+        type: 'ai',
+        label: 'Generate Topic Ideas',
+        system_prompt: 'You are a content strategist. Generate 5 engaging blog post topics.',
+        user_prompt: 'Generate topics for a tech blog about AI and productivity.',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'step-2',
+        workflow_id: 'demo-workflow-1',
+        order_index: 1,
+        type: 'human',
+        label: 'Review and Select Topic',
+        instructions: 'Review the generated topics and select the most promising one.',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ]
+  },
+  {
+    id: 'demo-workflow-2',
+    title: 'Process Taxonomy Creation',
+    description: 'Workflow for creating a standard common process framework taxonomy for baseline purposes',
+    author_id: 'demo-user-123',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    version: '1.0',
+    version_notes: 'Initial version',
+    is_public: true,
+    category: 'business',
+    steps: [
+      {
+        id: 'step-1',
+        workflow_id: 'demo-workflow-2',
+        order_index: 0,
+        type: 'human',
+        label: 'Indicate the sector / industry',
+        instructions: 'Specify the industry sector for the taxonomy framework.',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'step-2',
+        workflow_id: 'demo-workflow-2',
+        order_index: 1,
+        type: 'ai',
+        label: 'Pull APQC of said sector / industry and function',
+        system_prompt: 'You are a business process expert. Analyze the APQC framework for the specified industry.',
+        user_prompt: 'Provide APQC process categories for the specified industry sector.',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'step-3',
+        workflow_id: 'demo-workflow-2',
+        order_index: 2,
+        type: 'human',
+        label: 'Share any client business process documentation',
+        instructions: 'Upload or provide any existing business process documentation from the client.',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'step-4',
+        workflow_id: 'demo-workflow-2',
+        order_index: 3,
+        type: 'ai',
+        label: 'Tailor taxonomy to the client and indicate any key nuances to consider',
+        system_prompt: 'You are a business process consultant. Create a customized taxonomy based on APQC and client documentation.',
+        user_prompt: 'Create a tailored process taxonomy that incorporates client-specific nuances and requirements.',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'step-5',
+        workflow_id: 'demo-workflow-2',
+        order_index: 4,
+        type: 'ai',
+        label: 'Create question set and focus process areas for human to leverage in client discussion',
+        system_prompt: 'You are a business consultant. Create strategic questions for client engagement.',
+        user_prompt: 'Generate a comprehensive question set for client discussions about process areas.',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ]
+  }
+];
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
   
   if (req.method === 'POST') {
     try {
+      // Find the workflow to get total steps
+      const workflow = workflows.find(w => w.id === id);
+      if (!workflow) {
+        return res.status(404).json({ error: 'Workflow not found' });
+      }
+      
       // Start a new workflow instance
       const instanceId = `instance-${Date.now()}`;
       const now = new Date().toISOString();
@@ -22,7 +134,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         current_step_index: 0,
         steps_completed: [],
         current_step_data: null,
-        total_steps: 0, // Will be set when we fetch the workflow
+        total_steps: workflow.steps.length,
         created_at: now,
         updated_at: now
       };
@@ -72,12 +184,68 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       
       if (action === 'complete_step') {
+        // Get the current workflow to access step details
+        const workflow = workflows.find(w => w.id === instance.workflow_id);
+        if (!workflow) {
+          return res.status(404).json({ error: 'Workflow not found' });
+        }
+        
+        const currentStep = workflow.steps[instance.current_step_index];
+        if (!currentStep) {
+          return res.status(400).json({ error: 'Invalid step index' });
+        }
+        
+        // If it's an AI step, execute the AI first
+        if (currentStep.type === 'ai') {
+          try {
+            const aiResponse = await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/ai/execute`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                step: currentStep,
+                inputs: { userInput: stepData.input || '' }
+              }),
+            });
+
+            if (aiResponse.ok) {
+              const aiData = await aiResponse.json();
+              stepData = {
+                ...stepData,
+                aiOutput: aiData.content,
+                aiCost: aiData.cost,
+                aiTokens: aiData.tokens
+              };
+            } else {
+              // If AI fails, still continue but note the error
+              stepData = {
+                ...stepData,
+                aiError: 'AI execution failed',
+                aiOutput: 'AI integration temporarily unavailable'
+              };
+            }
+          } catch (aiError) {
+            console.error('AI execution error:', aiError);
+            stepData = {
+              ...stepData,
+              aiError: 'AI execution failed',
+              aiOutput: 'AI integration temporarily unavailable'
+            };
+          }
+        }
+        
         // Mark current step as completed
         instance.steps_completed.push({
           step_index: instance.current_step_index,
           completed_at: new Date().toISOString(),
           data: stepData
         });
+        
+        // Update total cost if AI was involved
+        if (stepData.aiCost) {
+          instance.total_cost = (instance.total_cost || 0) + stepData.aiCost;
+        }
         
         // Move to next step
         instance.current_step_index += 1;
