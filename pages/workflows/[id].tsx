@@ -118,6 +118,52 @@ const WorkflowDetails: NextPage = () => {
     if (!workflow || !workflowInstance) return;
     
     try {
+      const currentStep = workflow.steps[activeStep];
+      let stepData = {
+        input: stepInput,
+        completed_at: new Date().toISOString()
+      };
+
+      // If it's an AI step, execute the AI first
+      if (currentStep.type === 'ai') {
+        try {
+          const aiResponse = await fetch('/api/ai/execute', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              step: currentStep,
+              inputs: { userInput: stepInput }
+            }),
+          });
+
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json();
+            stepData = {
+              ...stepData,
+              aiOutput: aiData.content,
+              aiCost: aiData.cost,
+              aiTokens: aiData.tokens
+            };
+          } else {
+            // If AI fails, still continue but note the error
+            stepData = {
+              ...stepData,
+              aiError: 'AI execution failed',
+              aiOutput: 'AI integration temporarily unavailable'
+            };
+          }
+        } catch (aiError) {
+          console.error('AI execution error:', aiError);
+          stepData = {
+            ...stepData,
+            aiError: 'AI execution failed',
+            aiOutput: 'AI integration temporarily unavailable'
+          };
+        }
+      }
+
       const response = await fetch(`/api/workflows/${id}/execute`, {
         method: 'PUT',
         headers: {
@@ -126,10 +172,7 @@ const WorkflowDetails: NextPage = () => {
         body: JSON.stringify({
           instanceId: workflowInstance.id,
           action: 'complete_step',
-          stepData: {
-            input: stepInput,
-            completed_at: new Date().toISOString()
-          }
+          stepData
         }),
       });
       
@@ -305,8 +348,14 @@ const WorkflowDetails: NextPage = () => {
                         <span className="text-sm font-medium text-green-800">Step {completedStep.step_index + 1} Completed</span>
                         <span className="text-xs text-green-600">{completedStep.completed_at}</span>
                       </div>
-                      <div className="text-sm text-green-700">
-                        <strong>Human Decision:</strong> {completedStep.data?.input || 'No input recorded'}
+                      <div className="text-sm text-green-700 space-y-1">
+                        <div><strong>Human Decision:</strong> {completedStep.data?.input || 'No input recorded'}</div>
+                        {completedStep.data?.aiOutput && (
+                          <div><strong>AI Output:</strong> {completedStep.data.aiOutput}</div>
+                        )}
+                        {completedStep.data?.aiCost && (
+                          <div><strong>AI Cost:</strong> ${completedStep.data.aiCost.toFixed(6)} ({completedStep.data.aiTokens} tokens)</div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -395,9 +444,9 @@ const WorkflowDetails: NextPage = () => {
                                   )}
                                 </div>
                               )}
-                              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                                <p className="text-sm text-yellow-800">
-                                  <strong>AI Output:</strong> [AI integration coming soon - this will show the actual AI response]
+                              <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                                <p className="text-sm text-green-800">
+                                  <strong>AI Output:</strong> Click "Complete Step & Continue" to execute the AI and see the response.
                                 </p>
                               </div>
                             </div>

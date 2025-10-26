@@ -13,11 +13,11 @@ export const openai = new OpenAI({
   apiKey: openaiApiKey,
 });
 
-// Calculate API cost based on token usage
+// Calculate API cost based on token usage for GPT-5 Nano
 export const calculateCost = (usage: { prompt_tokens: number; completion_tokens: number }) => {
-  // GPT-4 Turbo pricing: $0.01 per 1K prompt tokens, $0.03 per 1K completion tokens
-  const promptCost = (usage.prompt_tokens / 1000) * 0.01;
-  const completionCost = (usage.completion_tokens / 1000) * 0.03;
+  // GPT-5 Nano pricing: $0.05 per 1M prompt tokens, $0.40 per 1M completion tokens
+  const promptCost = (usage.prompt_tokens / 1000000) * 0.05;
+  const completionCost = (usage.completion_tokens / 1000000) * 0.40;
   return promptCost + completionCost;
 };
 
@@ -45,34 +45,47 @@ export const interpolateInputs = (prompt: string, inputs: Record<string, any>): 
   return interpolatedPrompt;
 };
 
-// Execute an AI step with OpenAI
+// Execute an AI step with OpenAI GPT-5 Nano
 export async function executeAIStep(step: any, inputs: any) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: step.systemPrompt || 'You are a helpful assistant.' },
-        { role: 'user', content: interpolateInputs(step.userPrompt || '', inputs) }
-      ],
-      max_tokens: 2000,
-      temperature: 0.7
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-5-nano',
+        messages: [
+          { role: 'system', content: step.system_prompt || step.systemPrompt || 'You are a helpful assistant.' },
+          { role: 'user', content: interpolateInputs(step.user_prompt || step.userPrompt || '', inputs) }
+        ],
+        max_tokens: 2000,
+        temperature: 0.7
+      })
     })
-  })
-  
-  const data = await response.json()
-  
-  // Calculate cost
-  const tokens = data.usage.total_tokens
-  const cost = (tokens / 1000) * 0.002 // GPT-3.5 pricing
-  
-  return {
-    content: data.choices[0].message.content,
-    cost,
-    tokens
+    
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json()
+    
+    // Calculate cost using GPT-5 Nano pricing
+    const promptTokens = data.usage?.prompt_tokens || 0;
+    const completionTokens = data.usage?.completion_tokens || 0;
+    const totalTokens = data.usage?.total_tokens || 0;
+    const cost = calculateCost({ prompt_tokens: promptTokens, completion_tokens: completionTokens });
+    
+    return {
+      content: data.choices[0].message.content,
+      cost,
+      tokens: totalTokens,
+      promptTokens,
+      completionTokens
+    }
+  } catch (error) {
+    console.error('Error executing AI step:', error);
+    throw new Error(`Failed to execute AI step: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 } 
