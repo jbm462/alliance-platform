@@ -5,7 +5,7 @@ import Layout from '../../components/Layout';
 import { ArrowLeft, ArrowDown, User, Bot, Play, Share, Edit, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useSession, getSession } from 'next-auth/react';
+// Removed NextAuth imports - using simplified auth
 import MetricsDisplay from '../../components/MetricsDisplay';
 import VersionHistory from '../../components/VersionHistory';
 
@@ -35,7 +35,6 @@ interface WorkflowDetailsProps {
 
 const WorkflowDetails: NextPage<WorkflowDetailsProps> = ({ workflow, error }) => {
   const router = useRouter();
-  const { data: session } = useSession();
   const [activeStep, setActiveStep] = useState(-1); // -1 means no step is active
   
   // Handle back button
@@ -142,11 +141,9 @@ const WorkflowDetails: NextPage<WorkflowDetailsProps> = ({ workflow, error }) =>
               <button className="text-gray-400 hover:text-gray-500">
                 <Share className="h-5 w-5" />
               </button>
-              {session && session.user.name === workflow.author && (
-                <button className="text-gray-400 hover:text-gray-500">
-                  <Edit className="h-5 w-5" />
-                </button>
-              )}
+              <button className="text-gray-400 hover:text-gray-500">
+                <Edit className="h-5 w-5" />
+              </button>
               <div className="flex items-center">
                 <Star className="h-5 w-5 text-yellow-400" />
                 <span className="ml-1 text-sm text-gray-500">{workflow.rating}</span>
@@ -267,36 +264,23 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const { id } = context.params as { id: string };
   
   try {
-    // Import Supabase client directly
-    const { createClient } = await import('@supabase/supabase-js');
+    // Fetch the workflow from our API
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3000';
     
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+    const response = await fetch(`${baseUrl}/api/workflows/${id}`);
     
-    if (!supabaseUrl || !supabaseAnonKey) {
-      throw new Error('Missing Supabase environment variables');
-    }
-    
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
-    
-    // Fetch the workflow directly from Supabase
-    const { data: workflow, error } = await supabase
-      .from('workflows')
-      .select(`
-        *,
-        steps:workflow_steps(*)
-      `)
-      .eq('id', id)
-      .single();
-    
-    if (error) {
-      if (error.code === 'PGRST116') {
+    if (!response.ok) {
+      if (response.status === 404) {
         return {
           notFound: true
         };
       }
-      throw error;
+      throw new Error('Failed to fetch workflow');
     }
+    
+    const workflow = await response.json();
     
     // Transform the data to match the expected format
     const transformedWorkflow = {
@@ -310,7 +294,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         userPrompt: step.user_prompt,
         instructions: step.instructions
       })),
-      author: 'Demo User', // Since we don't have user lookup yet
+      author: workflow.author_id || 'Demo User',
       usageCount: 0, // Placeholder
       rating: 4.5, // Placeholder
       createdAt: workflow.created_at,
