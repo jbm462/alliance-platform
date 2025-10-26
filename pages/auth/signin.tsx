@@ -10,6 +10,30 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   
+  const setupDemo = async () => {
+    try {
+      const response = await fetch('/api/demo/setup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setError('');
+        // Auto-fill demo credentials
+        setEmail('demo@alliance.com');
+        setPassword('password');
+      } else {
+        setError(data.error || 'Failed to setup demo user');
+      }
+    } catch (err) {
+      setError('Network error. Please try again.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -58,6 +82,14 @@ export default function SignIn() {
                 return to the homepage
               </Link>
             </p>
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-800">
+                <strong>Demo Credentials:</strong><br/>
+                Email: demo@alliance.com<br/>
+                Password: password<br/>
+                <em>(First time? <button onClick={setupDemo} className="underline">Click here to setup demo user</button>)</em>
+              </p>
+            </div>
           </div>
           
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
