@@ -195,6 +195,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(400).json({ error: 'Invalid step index' });
         }
         
+        let finalStepData = { ...stepData };
+        
         // If it's an AI step, execute the AI first
         if (currentStep.type === 'ai') {
           try {
@@ -211,24 +213,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             if (aiResponse.ok) {
               const aiData = await aiResponse.json();
-              stepData = {
-                ...stepData,
+              finalStepData = {
+                ...finalStepData,
                 aiOutput: aiData.content,
                 aiCost: aiData.cost,
                 aiTokens: aiData.tokens
               };
             } else {
               // If AI fails, still continue but note the error
-              stepData = {
-                ...stepData,
+              finalStepData = {
+                ...finalStepData,
                 aiError: 'AI execution failed',
                 aiOutput: 'AI integration temporarily unavailable'
               };
             }
           } catch (aiError) {
             console.error('AI execution error:', aiError);
-            stepData = {
-              ...stepData,
+            finalStepData = {
+              ...finalStepData,
               aiError: 'AI execution failed',
               aiOutput: 'AI integration temporarily unavailable'
             };
@@ -239,12 +241,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         instance.steps_completed.push({
           step_index: instance.current_step_index,
           completed_at: new Date().toISOString(),
-          data: stepData
+          data: finalStepData
         });
         
         // Update total cost if AI was involved
-        if (stepData.aiCost) {
-          instance.total_cost = (instance.total_cost || 0) + stepData.aiCost;
+        if (finalStepData.aiCost) {
+          instance.total_cost = (instance.total_cost || 0) + finalStepData.aiCost;
         }
         
         // Move to next step
