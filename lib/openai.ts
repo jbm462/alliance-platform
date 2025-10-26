@@ -13,11 +13,11 @@ export const openai = new OpenAI({
   apiKey: openaiApiKey,
 });
 
-// Calculate API cost based on token usage for GPT-5 Nano
+// Calculate API cost based on token usage for GPT-3.5 Turbo
 export const calculateCost = (usage: { prompt_tokens: number; completion_tokens: number }) => {
-  // GPT-5 Nano pricing: $0.05 per 1M prompt tokens, $0.40 per 1M completion tokens
-  const promptCost = (usage.prompt_tokens / 1000000) * 0.05;
-  const completionCost = (usage.completion_tokens / 1000000) * 0.40;
+  // GPT-3.5 Turbo pricing: $0.50 per 1M prompt tokens, $1.50 per 1M completion tokens
+  const promptCost = (usage.prompt_tokens / 1000000) * 0.50;
+  const completionCost = (usage.completion_tokens / 1000000) * 1.50;
   return promptCost + completionCost;
 };
 
@@ -45,9 +45,13 @@ export const interpolateInputs = (prompt: string, inputs: Record<string, any>): 
   return interpolatedPrompt;
 };
 
-// Execute an AI step with OpenAI GPT-5 Nano
+// Execute an AI step with OpenAI GPT-3.5 Turbo
 export async function executeAIStep(step: any, inputs: any) {
   try {
+    console.log('Executing AI step with model: gpt-3.5-turbo');
+    console.log('API Key present:', !!process.env.OPENAI_API_KEY);
+    console.log('Step data:', JSON.stringify(step, null, 2));
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -55,7 +59,7 @@ export async function executeAIStep(step: any, inputs: any) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-nano',
+        model: 'gpt-3.5-turbo',
         messages: [
           { role: 'system', content: step.system_prompt || step.systemPrompt || 'You are a helpful assistant.' },
           { role: 'user', content: interpolateInputs(step.user_prompt || step.userPrompt || '', inputs) }
@@ -65,9 +69,11 @@ export async function executeAIStep(step: any, inputs: any) {
       })
     })
     
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
-    }
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('OpenAI API error details:', errorText);
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
     
     const data = await response.json()
     

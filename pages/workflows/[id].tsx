@@ -56,8 +56,8 @@ const WorkflowDetails: NextPage = () => {
               steps: data.steps.sort((a: any, b: any) => a.order_index - b.order_index).map((step: any) => ({
                 type: step.type,
                 label: step.label,
-                systemPrompt: step.system_prompt,
-                userPrompt: step.user_prompt,
+                system_prompt: step.system_prompt,
+                user_prompt: step.user_prompt,
                 instructions: step.instructions
               })),
               author: data.author_id || 'Demo User',
