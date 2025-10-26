@@ -13,6 +13,9 @@ import VersionHistory from '../../components/VersionHistory';
 interface WorkflowStep {
   type: 'human' | 'ai';
   label: string;
+  instructions?: string;
+  system_prompt?: string;
+  user_prompt?: string;
 }
 
 interface Workflow {
