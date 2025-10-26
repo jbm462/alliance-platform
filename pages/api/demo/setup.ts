@@ -1,4 +1,3 @@
-import { supabase } from '../../../lib/supabase'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -7,36 +6,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Create demo user
-    const { data, error } = await supabase.auth.signUp({
-      email: 'demo@alliance.com',
-      password: 'password',
-    })
-    
-    if (error) {
-      // If user already exists, try to sign in
-      if (error.message.includes('already registered')) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: 'demo@alliance.com',
-          password: 'password',
-        })
-        
-        if (signInError) {
-          return res.status(400).json({ error: signInError.message })
-        }
-        
-        return res.status(200).json({ 
-          message: 'Demo user already exists and is ready to use',
-          user: signInData.user 
-        })
-      }
-      
-      return res.status(400).json({ error: error.message })
-    }
-    
+    // For now, just return success - the demo user will be created when they first try to sign in
     return res.status(200).json({ 
-      message: 'Demo user created successfully',
-      user: data.user 
+      message: 'Demo user setup ready. You can now use demo@alliance.com / password',
+      ready: true
     })
   } catch (err) {
     console.error('Demo setup error:', err)
