@@ -35,6 +35,9 @@ const WorkflowDetails: NextPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(-1); // -1 means no step is active
+  const [workflowInstance, setWorkflowInstance] = useState<any>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [stepInput, setStepInput] = useState('');
 
   useEffect(() => {
     if (id) {
@@ -81,18 +84,73 @@ const WorkflowDetails: NextPage = () => {
   };
   
   // Handle start workflow
-  const handleStartWorkflow = () => {
-    setActiveStep(0);
+  const handleStartWorkflow = async () => {
+    if (!workflow) return;
+    
+    setIsExecuting(true);
+    try {
+      const response = await fetch(`/api/workflows/${id}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWorkflowInstance(data.instance);
+        setActiveStep(0);
+      } else {
+        setError('Failed to start workflow');
+      }
+    } catch (err) {
+      setError('Failed to start workflow');
+    } finally {
+      setIsExecuting(false);
+    }
   };
   
   // Handle next step
-  const handleNextStep = () => {
-    if (workflow && activeStep < workflow.steps.length - 1) {
-      setActiveStep(activeStep + 1);
-    } else {
-      // Workflow completed
-      setActiveStep(-1);
+  const handleNextStep = async () => {
+    if (!workflow || !workflowInstance) return;
+    
+    try {
+      const response = await fetch(`/api/workflows/${id}/execute`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          instanceId: workflowInstance.id,
+          action: 'complete_step',
+          stepData: {
+            input: stepInput,
+            completed_at: new Date().toISOString()
+          }
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setWorkflowInstance(data.instance);
+        
+        if (data.instance.status === 'completed') {
+          setActiveStep(-1);
+          setWorkflowInstance(null);
+          setStepInput('');
+        } else {
+          setActiveStep(data.instance.current_step_index);
+          setStepInput('');
+        }
+      }
+    } catch (err) {
+      setError('Failed to complete step');
     }
+  };
+  
+  // Handle step input change
+  const handleStepInputChange = (value: string) => {
+    setStepInput(value);
   };
   
   if (loading) {
@@ -173,18 +231,24 @@ const WorkflowDetails: NextPage = () => {
           {activeStep === -1 ? (
             <button
               onClick={handleStartWorkflow}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human"
+              disabled={isExecuting}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Play className="mr-2 h-4 w-4" />
-              Start Workflow
+              {isExecuting ? 'Starting...' : 'Start Workflow'}
             </button>
           ) : (
-            <button
-              onClick={handleNextStep}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human"
-            >
-              {activeStep < workflow.steps.length - 1 ? 'Next Step' : 'Complete Workflow'}
-            </button>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500">
+                Step {activeStep + 1} of {workflow.steps.length}
+              </span>
+              <button
+                onClick={handleNextStep}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human"
+              >
+                {activeStep < workflow.steps.length - 1 ? 'Next Step' : 'Complete Workflow'}
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -263,14 +327,24 @@ const WorkflowDetails: NextPage = () => {
                             <p className="text-sm font-medium text-gray-700">
                               Complete this step by providing your input:
                             </p>
+                            {step.instructions && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                                <p className="text-sm text-blue-800">
+                                  <strong>Instructions:</strong> {step.instructions}
+                                </p>
+                              </div>
+                            )}
                             <textarea
                               rows={4}
+                              value={stepInput}
+                              onChange={(e) => handleStepInputChange(e.target.value)}
                               className="shadow-sm block w-full focus:ring-human focus:border-human sm:text-sm border border-gray-300 rounded-md"
                               placeholder="Enter your contribution..."
                             />
                             <button
                               onClick={handleNextStep}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human"
+                              disabled={!stepInput.trim()}
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-human hover:bg-human-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-human disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               Submit and Continue
                             </button>
@@ -280,6 +354,18 @@ const WorkflowDetails: NextPage = () => {
                             <p className="text-sm font-medium text-gray-700">
                               AI is processing this step...
                             </p>
+                            {step.system_prompt && (
+                              <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                                <p className="text-sm text-green-800">
+                                  <strong>AI Prompt:</strong> {step.system_prompt}
+                                </p>
+                                {step.user_prompt && (
+                                  <p className="text-sm text-green-700 mt-2">
+                                    <strong>User Input:</strong> {step.user_prompt}
+                                  </p>
+                                )}
+                              </div>
+                            )}
                             <div className="animate-pulse flex space-x-4">
                               <div className="flex-1 space-y-4 py-1">
                                 <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -288,6 +374,11 @@ const WorkflowDetails: NextPage = () => {
                                   <div className="h-4 bg-gray-200 rounded w-5/6"></div>
                                 </div>
                               </div>
+                            </div>
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                              <p className="text-sm text-yellow-800">
+                                <strong>Note:</strong> AI integration coming soon! For now, click "Continue" to proceed.
+                              </p>
                             </div>
                             <button
                               onClick={handleNextStep}
