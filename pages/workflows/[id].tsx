@@ -124,45 +124,7 @@ const WorkflowDetails: NextPage = () => {
         completed_at: new Date().toISOString()
       };
 
-      // If it's an AI step, execute the AI first
-      if (currentStep.type === 'ai') {
-        try {
-          const aiResponse = await fetch('/api/ai/execute', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              step: currentStep,
-              inputs: { userInput: stepInput }
-            }),
-          });
-
-          if (aiResponse.ok) {
-            const aiData = await aiResponse.json();
-            stepData = {
-              ...stepData,
-              aiOutput: aiData.content,
-              aiCost: aiData.cost,
-              aiTokens: aiData.tokens
-            };
-          } else {
-            // If AI fails, still continue but note the error
-            stepData = {
-              ...stepData,
-              aiError: 'AI execution failed',
-              aiOutput: 'AI integration temporarily unavailable'
-            };
-          }
-        } catch (aiError) {
-          console.error('AI execution error:', aiError);
-          stepData = {
-            ...stepData,
-            aiError: 'AI execution failed',
-            aiOutput: 'AI integration temporarily unavailable'
-          };
-        }
-      }
+      // AI execution is handled by the backend workflow execution API
 
       const response = await fetch(`/api/workflows/${id}/execute`, {
         method: 'PUT',
@@ -188,6 +150,8 @@ const WorkflowDetails: NextPage = () => {
           setActiveStep(data.instance.current_step_index);
           setStepInput('');
         }
+      } else {
+        setError('Failed to complete step');
       }
     } catch (err) {
       setError('Failed to complete step');
@@ -446,8 +410,24 @@ const WorkflowDetails: NextPage = () => {
                               )}
                               <div className="bg-green-50 border border-green-200 rounded-md p-3">
                                 <p className="text-sm text-green-800">
-                                  <strong>AI Output:</strong> Click "Complete Step & Continue" to execute the AI and see the response.
+                                  <strong>AI Output:</strong> 
                                 </p>
+                                <div className="mt-2 text-sm text-green-700">
+                                  {workflowInstance && workflowInstance.steps_completed && workflowInstance.steps_completed.length > activeStep && 
+                                   workflowInstance.steps_completed[activeStep]?.data?.aiOutput ? (
+                                    <div>
+                                      <p>{workflowInstance.steps_completed[activeStep].data.aiOutput}</p>
+                                      {workflowInstance.steps_completed[activeStep].data.aiCost && (
+                                        <p className="mt-2 text-xs text-green-600">
+                                          Cost: ${workflowInstance.steps_completed[activeStep].data.aiCost.toFixed(6)} 
+                                          ({workflowInstance.steps_completed[activeStep].data.aiTokens} tokens)
+                                        </p>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p>Click "Complete Step & Continue" to execute the AI and see the response.</p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           )}
