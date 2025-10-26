@@ -119,7 +119,7 @@ const WorkflowDetails: NextPage = () => {
     
     try {
       const currentStep = workflow.steps[activeStep];
-      let stepData = {
+      let stepData: any = {
         input: stepInput,
         completed_at: new Date().toISOString()
       };
