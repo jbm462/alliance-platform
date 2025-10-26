@@ -140,6 +140,8 @@ const WorkflowDetails: NextPage = () => {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Workflow step completed:', data.instance);
+        console.log('Steps completed:', data.instance.steps_completed);
         setWorkflowInstance(data.instance);
         
         if (data.instance.status === 'completed') {
@@ -151,6 +153,8 @@ const WorkflowDetails: NextPage = () => {
           setStepInput('');
         }
       } else {
+        const errorData = await response.json();
+        console.error('Failed to complete step:', errorData);
         setError('Failed to complete step');
       }
     } catch (err) {
@@ -413,20 +417,31 @@ const WorkflowDetails: NextPage = () => {
                                   <strong>AI Output:</strong> 
                                 </p>
                                 <div className="mt-2 text-sm text-green-700">
-                                  {workflowInstance && workflowInstance.steps_completed && workflowInstance.steps_completed.length > activeStep && 
-                                   workflowInstance.steps_completed[activeStep]?.data?.aiOutput ? (
-                                    <div>
-                                      <p>{workflowInstance.steps_completed[activeStep].data.aiOutput}</p>
-                                      {workflowInstance.steps_completed[activeStep].data.aiCost && (
-                                        <p className="mt-2 text-xs text-green-600">
-                                          Cost: ${workflowInstance.steps_completed[activeStep].data.aiCost.toFixed(6)} 
-                                          ({workflowInstance.steps_completed[activeStep].data.aiTokens} tokens)
-                                        </p>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <p>Click "Complete Step & Continue" to execute the AI and see the response.</p>
-                                  )}
+                                  {(() => {
+                                    console.log('AI Output Debug:', {
+                                      workflowInstance: !!workflowInstance,
+                                      stepsCompleted: workflowInstance?.steps_completed?.length,
+                                      activeStep,
+                                      hasAIOutput: workflowInstance?.steps_completed?.[activeStep]?.data?.aiOutput
+                                    });
+                                    
+                                    if (workflowInstance && workflowInstance.steps_completed && workflowInstance.steps_completed.length > activeStep && 
+                                        workflowInstance.steps_completed[activeStep]?.data?.aiOutput) {
+                                      return (
+                                        <div>
+                                          <p>{workflowInstance.steps_completed[activeStep].data.aiOutput}</p>
+                                          {workflowInstance.steps_completed[activeStep].data.aiCost && (
+                                            <p className="mt-2 text-xs text-green-600">
+                                              Cost: ${workflowInstance.steps_completed[activeStep].data.aiCost.toFixed(6)} 
+                                              ({workflowInstance.steps_completed[activeStep].data.aiTokens} tokens)
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    } else {
+                                      return <p>Click "Complete Step & Continue" to execute the AI and see the response.</p>;
+                                    }
+                                  })()}
                                 </div>
                               </div>
                             </div>
