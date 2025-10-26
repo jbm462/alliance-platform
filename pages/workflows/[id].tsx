@@ -1,10 +1,10 @@
-import type { NextPage, GetServerSideProps } from 'next';
+import type { NextPage } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
 import { ArrowLeft, ArrowDown, User, Bot, Play, Share, Edit, Star } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 // Removed NextAuth imports - using simplified auth
 import MetricsDisplay from '../../components/MetricsDisplay';
 import VersionHistory from '../../components/VersionHistory';
@@ -28,14 +28,52 @@ interface Workflow {
   versionNotes?: string;
 }
 
-interface WorkflowDetailsProps {
-  workflow: Workflow | null;
-  error?: string;
-}
-
-const WorkflowDetails: NextPage<WorkflowDetailsProps> = ({ workflow, error }) => {
+const WorkflowDetails: NextPage = () => {
   const router = useRouter();
+  const { id } = router.query;
+  const [workflow, setWorkflow] = useState<Workflow | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState(-1); // -1 means no step is active
+
+  useEffect(() => {
+    if (id) {
+      const fetchWorkflow = async () => {
+        try {
+          const response = await fetch(`/api/workflows/${id}`);
+          if (response.ok) {
+            const data = await response.json();
+            setWorkflow({
+              id: data.id,
+              title: data.title,
+              description: data.description,
+              steps: data.steps.sort((a: any, b: any) => a.order_index - b.order_index).map((step: any) => ({
+                type: step.type,
+                label: step.label,
+                systemPrompt: step.system_prompt,
+                userPrompt: step.user_prompt,
+                instructions: step.instructions
+              })),
+              author: data.author_id || 'Demo User',
+              usageCount: 0,
+              rating: 4.5,
+              createdAt: data.created_at,
+              version: data.version,
+              versionNotes: data.version_notes
+            });
+          } else {
+            setError('Workflow not found');
+          }
+        } catch (err) {
+          setError('Failed to load workflow');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchWorkflow();
+    }
+  }, [id]);
   
   // Handle back button
   const handleBack = () => {
@@ -57,6 +95,19 @@ const WorkflowDetails: NextPage<WorkflowDetailsProps> = ({ workflow, error }) =>
     }
   };
   
+  if (loading) {
+    return (
+      <Layout>
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-human mx-auto"></div>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">Loading workflow...</h3>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   if (error) {
     return (
       <Layout>
@@ -84,7 +135,16 @@ const WorkflowDetails: NextPage<WorkflowDetailsProps> = ({ workflow, error }) =>
       <Layout>
         <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6">
           <div className="text-center">
-            <h3 className="text-lg font-medium text-gray-900">Loading...</h3>
+            <h3 className="text-lg font-medium text-gray-900">Workflow not found</h3>
+            <div className="mt-6">
+              <button
+                onClick={handleBack}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-human hover:bg-human-dark"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Workflows
+              </button>
+            </div>
           </div>
         </div>
       </Layout>
@@ -260,63 +320,6 @@ const WorkflowDetails: NextPage<WorkflowDetailsProps> = ({ workflow, error }) =>
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { id } = context.params as { id: string };
-  
-  try {
-    // Fetch the workflow from our API
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3000';
-    
-    const response = await fetch(`${baseUrl}/api/workflows/${id}`);
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        return {
-          notFound: true
-        };
-      }
-      throw new Error('Failed to fetch workflow');
-    }
-    
-    const workflow = await response.json();
-    
-    // Transform the data to match the expected format
-    const transformedWorkflow = {
-      id: workflow.id,
-      title: workflow.title,
-      description: workflow.description,
-      steps: workflow.steps.sort((a: any, b: any) => a.order_index - b.order_index).map((step: any) => ({
-        type: step.type,
-        label: step.label,
-        systemPrompt: step.system_prompt,
-        userPrompt: step.user_prompt,
-        instructions: step.instructions
-      })),
-      author: workflow.author_id || 'Demo User',
-      usageCount: 0, // Placeholder
-      rating: 4.5, // Placeholder
-      createdAt: workflow.created_at,
-      version: workflow.version,
-      versionNotes: workflow.version_notes
-    };
-    
-    return {
-      props: {
-        workflow: transformedWorkflow
-      }
-    };
-  } catch (error) {
-    console.error('Error fetching workflow:', error);
-    
-    return {
-      props: {
-        workflow: null,
-        error: 'Failed to load workflow'
-      }
-    };
-  }
-};
+// Removed server-side props - using client-side loading
 
 export default WorkflowDetails; 
