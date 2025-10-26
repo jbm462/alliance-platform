@@ -6,10 +6,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // For now, just return success - the demo user will be created when they first try to sign in
     return res.status(200).json({ 
-      message: 'Demo user setup ready. You can now use demo@alliance.com / password',
-      ready: true
+      message: 'Demo user is ready! Use demo@alliance.com / password to sign in.',
+      ready: true,
+      credentials: {
+        email: 'demo@alliance.com',
+        password: 'password'
+      }
     })
   } catch (err) {
     console.error('Demo setup error:', err)

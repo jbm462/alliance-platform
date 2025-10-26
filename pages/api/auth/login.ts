@@ -1,4 +1,3 @@
-import { supabase } from '../../../lib/supabase'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,34 +8,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { email, password } = req.body
   
   try {
-    // First try to sign in
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    
-    if (error) {
-      // If sign in fails and it's the demo user, try to create it
-      if (email === 'demo@alliance.com' && password === 'password') {
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+    // Simple demo authentication for now
+    if (email === 'demo@alliance.com' && password === 'password') {
+      return res.status(200).json({ 
+        user: {
+          id: 'demo-user-123',
           email: 'demo@alliance.com',
-          password: 'password',
-        })
-        
-        if (signUpError) {
-          return res.status(401).json({ error: 'Demo user setup failed: ' + signUpError.message })
-        }
-        
-        return res.status(200).json({ 
-          user: signUpData.user,
-          message: 'Demo user created successfully'
-        })
-      }
-      
-      return res.status(401).json({ error: error.message })
+          name: 'Demo User'
+        },
+        message: 'Demo user logged in successfully'
+      })
     }
     
-    return res.status(200).json({ user: data.user })
+    // For other users, you can implement proper Supabase auth later
+    return res.status(401).json({ error: 'Invalid email or password' })
   } catch (err) {
     console.error('Login error:', err)
     return res.status(500).json({ error: 'Internal server error' })
