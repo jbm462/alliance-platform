@@ -3,7 +3,7 @@ import { IncomingForm, Fields, Files } from 'formidable';
 import { promises as fs } from 'fs';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { getSession } from 'next-auth/react';
+// Removed NextAuth import - using simplified auth
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../../lib/supabase';
 
@@ -21,7 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   
   // Get user session
-  const session = await getSession({ req });
+  // Simplified auth - using demo user for now
+  const session = { user: { id: 'demo-user-123' } };
   
   if (!session) {
     return res.status(401).json({ message: 'Unauthorized' });

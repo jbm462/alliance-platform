@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
+// Removed NextAuth import - using simplified auth
 import { createServiceCatalogWorkflow } from '../../lib/predefinedWorkflows';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -9,7 +9,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   
   // Get user session
-  const session = await getSession({ req });
+  // Simplified auth - using demo user for now
+  const session = { user: { id: 'demo-user-123' } };
   
   if (!session || !session.user?.id) {
     return res.status(401).json({ message: 'Unauthorized' });
