@@ -1,26 +1,103 @@
 {
   "polyfillFiles": [
-    "static/chunks/polyfills.js"
+    "static/chunks/polyfills-c67a75d1b6f99dc8.js"
   ],
-  "devFiles": [
-    "static/chunks/react-refresh.js"
-  ],
+  "devFiles": [],
   "ampDevFiles": [],
   "lowPriorityFiles": [
-    "static/development/_buildManifest.js",
-    "static/development/_ssgManifest.js"
+    "static/gmMKzAQeE7M9oTlZke_Q8/_buildManifest.js",
+    "static/gmMKzAQeE7M9oTlZke_Q8/_ssgManifest.js"
   ],
   "rootMainFiles": [],
   "pages": {
+    "/": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/index-b9a6ed29bdb21976.js"
+    ],
     "/_app": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/_app.js"
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/css/ed799e8f37eb942f.css",
+      "static/chunks/pages/_app-d9d3615df171fa2b.js"
     ],
     "/_error": [
-      "static/chunks/webpack.js",
-      "static/chunks/main.js",
-      "static/chunks/pages/_error.js"
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/pages/_error-ee5b5fb91d29d86f.js"
+    ],
+    "/auth/register": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/auth/register-922696cb31e6c464.js"
+    ],
+    "/auth/signin": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/auth/signin-6a4d726942a20b1a.js"
+    ],
+    "/client-validation/[id]": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/pages/client-validation/[id]-9acf99ab79b81af3.js"
+    ],
+    "/collaboration": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/collaboration-78a83be5f4a97d3a.js"
+    ],
+    "/live-collaboration": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/live-collaboration-a108f105c6e1c37a.js"
+    ],
+    "/missions": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/missions-a45d08dd9a017019.js"
+    ],
+    "/profile": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/profile-691037f19453ce35.js"
+    ],
+    "/workflows": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/workflows-9f80e07e3148bb24.js"
+    ],
+    "/workflows/[id]": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/workflows/[id]-39fa221fdd1c1591.js"
+    ],
+    "/workflows/create": [
+      "static/chunks/webpack-fd8027ecb5121007.js",
+      "static/chunks/framework-fae63b21a27d6472.js",
+      "static/chunks/main-22b029abc2beadb0.js",
+      "static/chunks/996-f63e9faf058fa8be.js",
+      "static/chunks/pages/workflows/create-85da7ea34365a52d.js"
     ]
   },
   "ampFirstPages": []

@@ -101,7 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           timestamp: new Date().toISOString()
         };
         
-        const phaseIndex = session.phases.findIndex(p => p.id === phase);
+        const phaseIndex = session.phases.findIndex((p: any) => p.id === phase);
         if (phaseIndex !== -1) {
           session.phases[phaseIndex].steps.push(step);
           session.updated_at = new Date().toISOString();
@@ -112,7 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       
       if (action === 'update_phase') {
         const { phase, status } = data;
-        const phaseIndex = session.phases.findIndex(p => p.id === phase);
+        const phaseIndex = session.phases.findIndex((p: any) => p.id === phase);
         if (phaseIndex !== -1) {
           session.phases[phaseIndex].status = status;
           session.current_phase = phase;
