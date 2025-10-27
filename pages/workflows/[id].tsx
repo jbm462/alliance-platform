@@ -355,7 +355,9 @@ const WorkflowDetails: NextPage = () => {
                         <span className="text-xs text-green-600">{completedStep.completed_at}</span>
                       </div>
                       <div className="text-sm text-green-700 space-y-1">
-                        <div><strong>Human Decision:</strong> {completedStep.data?.input || 'No input recorded'}</div>
+                        {completedStep.data?.input && (
+                          <div><strong>Human Input:</strong> {completedStep.data.input}</div>
+                        )}
                         {completedStep.data?.aiOutput && (
                           <div><strong>AI Output:</strong> {completedStep.data.aiOutput}</div>
                         )}
@@ -456,22 +458,27 @@ const WorkflowDetails: NextPage = () => {
                                 </p>
                                 <div className="mt-2 text-sm text-green-700">
                                   {(() => {
+                                    // Find the completed step for the current active step
+                                    const completedStep = workflowInstance?.steps_completed?.find(
+                                      (step: any) => step.step_index === activeStep
+                                    );
+                                    
                                     console.log('AI Output Debug:', {
                                       workflowInstance: !!workflowInstance,
                                       stepsCompleted: workflowInstance?.steps_completed?.length,
                                       activeStep,
-                                      hasAIOutput: workflowInstance?.steps_completed?.[activeStep]?.data?.aiOutput
+                                      completedStep,
+                                      hasAIOutput: completedStep?.data?.aiOutput
                                     });
                                     
-                                    if (workflowInstance && workflowInstance.steps_completed && workflowInstance.steps_completed.length > activeStep && 
-                                        workflowInstance.steps_completed[activeStep]?.data?.aiOutput) {
+                                    if (completedStep?.data?.aiOutput) {
                                       return (
                                         <div>
-                                          <p>{workflowInstance.steps_completed[activeStep].data.aiOutput}</p>
-                                          {workflowInstance.steps_completed[activeStep].data.aiCost && (
+                                          <p>{completedStep.data.aiOutput}</p>
+                                          {completedStep.data.aiCost && (
                                             <p className="mt-2 text-xs text-green-600">
-                                              Cost: ${workflowInstance.steps_completed[activeStep].data.aiCost.toFixed(6)} 
-                                              ({workflowInstance.steps_completed[activeStep].data.aiTokens} tokens)
+                                              Cost: ${completedStep.data.aiCost.toFixed(6)} 
+                                              ({completedStep.data.aiTokens} tokens)
                                             </p>
                                           )}
                                         </div>
