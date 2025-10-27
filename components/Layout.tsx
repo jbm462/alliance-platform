@@ -96,6 +96,18 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </Link>
               
               <Link 
+                href="/live-collaboration" 
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/live-collaboration') 
+                    ? 'border-human text-gray-900' 
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                <Users className="mr-1 h-5 w-5" />
+                Live Collaboration
+              </Link>
+              
+              <Link 
                 href="/collaboration" 
                 className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
                   isActive('/collaboration') 
